@@ -1,0 +1,74 @@
+{
+    "valid_days_names_eng": {
+        "monday": 1,
+        "tuesday": 2,
+        "wednesday": 3,
+        "thursday": 4,
+        "friday": 5,
+        "saturday": 6,
+        "sunday": 7
+    },
+
+    "chat_id_-1000000001": {
+        "chat_id": -1000000000,
+        "chat_name": "Бачата 1",
+        "send_day_name_eng": "", 
+        "pool": {
+            "question": "Буду завтра",
+            "options": [
+                "Мальчик",
+                "Девочка",
+                "Нет"
+            ],
+            "is_anonymous": false,
+            "allows_multiple_answers": false
+        }
+    },
+
+    "chat_id_-2000000002": {
+        "chat_id": -2000000000,
+        "chat_name": "Бачата 2",
+        "send_day_name_eng": "", 
+        "pool": {
+            "question": "Буду завтра",
+            "options": [
+                "Мальчик",
+                "Девочка",
+                "Нет"
+            ],
+            "is_anonymous": false,
+            "allows_multiple_answers": false
+        }
+    },
+
+    "chat_id_-3000000003": {
+        "chat_id": -3000000000,
+        "chat_name": "Хипхоп 1",
+        "send_day_name_eng": "", 
+        "pool": {
+            "question": "Буду завтра",
+            "options": [
+                "Да",
+                "Нет"
+            ],
+            "is_anonymous": false,
+            "allows_multiple_answers": false
+        }
+    },
+
+    "chat_id_-4000000000": {
+        "chat_id": -4000000000,
+        "chat_name": "Bot testing",
+        "send_day_name_eng": "", 
+        "pool": {
+            "question": "ТЕСТ",
+            "options": [
+                "ТЕСТ_1",
+                "ТЕСТ_2"
+            ],
+            "is_anonymous": false,
+            "allows_multiple_answers": false
+        }
+    }
+
+}
