@@ -1,0 +1,8 @@
+# Security
+.env
+
+# Virtual environment
+.env
+.venv
+env
+venv
