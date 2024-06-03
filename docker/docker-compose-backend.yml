@@ -1,0 +1,26 @@
+version: '3.8'
+
+name: bot_telegram_backend
+
+networks:
+
+  telegram_bot_network:
+    external: true
+
+services:
+
+  backend:
+    container_name: bot_telegram_backend
+    command: "python main.py"
+    hostname: bot-telegram-backend
+    build: ../src
+    networks:
+      - telegram_bot_network
+
+  celery:
+    container_name: bot_telegram_celery
+    command: "celery -A celery_app.celery_app worker --beat --loglevel=info"
+    hostname: bot-telegram-celery
+    build: ../src
+    networks:
+      - telegram_bot_network
