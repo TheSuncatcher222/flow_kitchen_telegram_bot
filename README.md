@@ -62,8 +62,8 @@ cd ../../docker
 ✅ Запустить Docker (убедитесь, что `docker daemon` запущен в системе!) (ОПЦИОНАЛЬНО: запустить контейнер с Redis, если не планируется использовать свой)
 
 ```
-docker-compose -f docker-compose-redis.yml up --build
-docker-compose -f docker-compose-backend.yml up --build
+docker-compose -f docker-compose-redis.yml up -d
+docker-compose -f docker-compose-backend.yml up -d
 ```
 
 ___
