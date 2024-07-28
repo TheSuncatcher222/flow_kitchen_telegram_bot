@@ -26,7 +26,7 @@ repos:
     rev: v1.10.0
     hooks:
     # Linters
-    -   id: python-check-blanket-noqa   # Enforce that noqa annotations always occur with specific codes. Sample annotations: # noqa: F401, # noqa: F401,W203
+    # -   id: python-check-blanket-noqa   # Enforce that noqa annotations always occur with specific codes. Sample annotations: # noqa: F401, # noqa: F401,W203
     -   id: python-check-blanket-type-ignore    # Enforce that # type: ignore annotations always occur with specific codes. Sample annotations: # type: ignore[attr-defined], # type: ignore[attr-defined, name-defined]
 
 -   repo: https://github.com/asottile/add-trailing-comma
