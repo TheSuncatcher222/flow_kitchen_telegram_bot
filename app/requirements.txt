@@ -1,0 +1,19 @@
+# Alembic.
+alembic~=1.13.1                     # Для контроля миграций в базе данных.
+
+# Aiogram
+aiogram~=3.6.0                      # Telegram Bot API.
+
+# Celey
+celery[redis]~=5.4.0                # Для обработки фоновых задач в Celery.
+flower~=2.0.1                       # Для просмотра задач в Celery.
+
+# PosgreSQL.
+asyncpg~=0.29.0                     # Для работы с PostgreSQL в асинхронном режиме.
+psycopg2-binary~=2.9.9              # Для работы с PostgreSQL в синхронном режиме (в Celery)
+sqladmin[full]~=0.17.0              # Аналог Django-Admin.
+sqlalchemy~=2.0.30                  # ORM.
+
+# Pydantic.
+pydantic~=2.7.4                     # Для валидации данных.
+pydantic-settings~=2.3.3            # Для загрузки переменных окружения из .env файлов.
