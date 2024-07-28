@@ -1,8 +1,0 @@
-# Aiogram
-aiogram==3.6.0
-
-# Celey
-celery[redis]
-
-# Secrets
-python-dotenv==1.0.1
