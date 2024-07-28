@@ -59,11 +59,10 @@ nano .env
 cd ../../docker
 ```
 
-✅ Запустить Docker (убедитесь, что `docker daemon` запущен в системе!) (ОПЦИОНАЛЬНО: запустить контейнер с Redis, если не планируется использовать свой)
+✅ Запустить Docker (убедитесь, что `docker daemon` запущен в системе!)
 
 ```
-docker-compose -f docker-compose-redis.yml up -d
-docker-compose -f docker-compose-backend.yml up -d
+docker-compose -f docker/docker-compose.yml --env-file app/src/config/.env up -d
 ```
 
 ___
