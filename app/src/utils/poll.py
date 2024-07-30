@@ -95,17 +95,18 @@ def send_poll(poll_data: dict[str, any]) -> int | None:
 
     except Exception as err:
         # TODO. Обработать ошибку.
-        pass
+        poll_id: None = None
 
     finally:
         # TODO. Отправить сообщение в телеграм чат.
-        poll_id: None = None
+        pass
 
     return poll_id
 
 
 def mark_poll_as_sended(
     poll_data: dict[str, any],
+    message_id: int,
     today_date: date,
 ) -> None:
     with sync_session_maker() as session:
@@ -113,6 +114,7 @@ def mark_poll_as_sended(
             obj_id=poll_data['id'],
             obj_data={
                 'last_send_date': today_date,
+                'message_id': message_id,
             },
             session=session,
             perform_check_unique=False,
