@@ -37,9 +37,10 @@ def send_polls() -> None:
             today_day_of_week=today_day_of_week,
         )
         if is_needed_to_send:
-            send_poll(poll_data=poll_data)
+            message_id: int | None = send_poll(poll_data=poll_data)
             mark_poll_as_sended(
                 poll_data=poll_data,
+                message_id=message_id,
                 today_date=today_date,
             )
             any_changes: bool = True
