@@ -39,6 +39,7 @@ class Settings(BaseSettings):
     ADMIN_SECRET_KEY: str = 'string'
 
     """Настройки Telegram Bot."""
+    BOT_ADMIN_IDS: str
     BOT_TOKEN: str
     DEBUG_DB: bool = True
 
@@ -51,21 +52,6 @@ class TimeIntervals:
 
     # Seconds.
 
-    SECONDS_10: int = 10
     SECONDS_IN_1_MINUTE: int = 60
-    SECONDS_IN_5_MINUTES: int = SECONDS_IN_1_MINUTE * 5
     SECONDS_IN_1_HOUR: int = SECONDS_IN_1_MINUTE * 60
     SECONDS_IN_1_DAY: int = SECONDS_IN_1_HOUR * 24
-
-    # Days.
-
-    DAYS_IN_1_MONTH: int = 30
-
-    # Hours.
-
-    HOURS_IN_1_DAY: int = 24
-    HOURS_IN_1_MONTH: int = HOURS_IN_1_DAY * DAYS_IN_1_MONTH
-
-    # Weeks.
-
-    WEEKS_1_SEC: int = SECONDS_IN_1_DAY * 7
