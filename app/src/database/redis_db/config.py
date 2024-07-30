@@ -1,6 +1,6 @@
 from redis import Redis
 
-from config.config import settings
+from app.src.config.config import settings
 
 db_redis: Redis = Redis(
     host=settings.REDIS_HOST,
