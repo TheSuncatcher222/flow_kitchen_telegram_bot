@@ -4,7 +4,7 @@ from aiogram.types import (
 )
 
 
-def __make_row_keyboard(items: list[str]) -> ReplyKeyboardMarkup:
+def make_row_keyboard(items: list[str]) -> ReplyKeyboardMarkup:
     """
     Создаёт реплай-клавиатуру с кнопками в один ряд
     :param items: список текстов для кнопок
@@ -17,8 +17,16 @@ def __make_row_keyboard(items: list[str]) -> ReplyKeyboardMarkup:
     )
 
 
-KEYBOARD_MAIN_MENU_ADMIN: ReplyKeyboardMarkup = __make_row_keyboard(
+KEYBOARD_MAIN_MENU_ADMIN: ReplyKeyboardMarkup = make_row_keyboard(
     [
         '/add_poll',
+        '/my_polls',
+    ],
+)
+
+KEYBOARD_YES_NO: ReplyKeyboardMarkup = make_row_keyboard(
+    [
+        'Да',
+        'Нет',
     ],
 )
