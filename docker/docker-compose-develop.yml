@@ -1,0 +1,106 @@
+name: flow_kitchen_telegram_bot
+
+services:
+
+  redis:
+      # TODO: почему-то с дефолтным файлом конфигурации с redis.io
+      #       другие контейнеры не могут подключиться к этому.
+      # command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+      container_name: flow_kitchen_telegram_bot_redis
+      expose:
+        - 6379
+      healthcheck:
+        test: [CMD, redis-cli, ping]
+        interval: 10s
+        timeout: 60s
+        retries: 5
+      hostname: flow-kitchen-telegram-bot-redis
+      image: redis:7.2.1-alpine3.18
+      logging:
+        driver: json-file
+        options:
+          max-size: 10m
+          max-file: 5
+      restart: unless-stopped
+      volumes:
+        - redis_volume:/data/
+        - ../redis/redis_pid:/var/run/redis
+        - ../redis/redis.conf:/usr/local/etc/redis/redis.conf
+
+  postgresql:
+    container_name: flow_kitchen_telegram_bot_postgresql
+    env_file:
+      - ../app/src/config/.env
+    expose:
+      - 5432
+    hostname: flow-kitchen-telegram-bot-postgresql
+    image: postgres:15-alpine3.18
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "5"
+    restart: unless-stopped
+    volumes:
+      - postgresql_volume:/var/lib/postgresql/data/
+
+  pg_admin:
+    container_name: flow_kitchen_telegram_bot_pg_admin
+    depends_on:
+      - postgresql
+    env_file:
+      - ../app/src/config/.env
+    hostname: flow-kitchen-telegram-bot-pg-admin
+    image: dpage/pgadmin4
+    ports:
+      - "5050:80"
+    restart: unless-stopped
+    volumes:
+      - pg_admin_volume:/var/lib/pgadmin
+
+  app:
+    build:
+      context: ../app
+      dockerfile: Dockerfile
+    command: sh -c "
+      alembic upgrade head &
+      python src/main.py &
+      celery -A src.celery_app.celery_app:celery_app worker --loglevel=INFO &
+      celery -A src.celery_app.celery_app:celery_app beat --loglevel=INFO &
+      celery -A src.celery_app.celery_app:celery_app flower --basic_auth=${CELERY_FLOWER_ADMIN_USERNAME}:${CELERY_FLOWER_ADMIN_PASSWORD} --loglevel=INFO"
+    container_name: flow_kitchen_telegram_bot_app
+    depends_on:
+      - postgresql
+      - redis
+    env_file:
+      - ../app/src/config/.env
+    hostname: flow-kitchen-telegram-bot-app
+    restart: unless-stopped
+    volumes:
+      - ../app:/app
+
+  # app_celery:
+  #   build:
+  #     context: ../app
+  #     dockerfile: Dockerfile
+  #   command: sh -c "
+  #     celery -A src.celery_app.celery_app:celery_app worker --loglevel=INFO &
+  #     celery -A src.celery_app.celery_app:celery_app beat --loglevel=INFO &
+  #     celery -A src.celery_app.celery_app:celery_app flower --basic_auth=${CELERY_FLOWER_ADMIN_USERNAME}:${CELERY_FLOWER_ADMIN_PASSWORD} --loglevel=INFO"
+  #   container_name: flow_kitchen_telegram_bot_app_celery
+  #   depends_on:
+  #     - app
+  #   env_file:
+  #     - ../app/src/config/.env
+  #   hostname: flow-kitchen-telegram-bot-app-celery
+  #   ports:
+  #     - "5555:5555"
+  #   restart: unless-stopped
+  #   volumes:
+  #     - ../app:/app
+
+volumes:
+
+  pg_admin_volume:
+  postgresql_volume:
+  redis_volume:
