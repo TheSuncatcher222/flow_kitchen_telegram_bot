@@ -26,7 +26,7 @@ from app.src.utils.reply_keyboard import (
     KEYBOARD_MAIN_MENU_ADMIN,
     KEYBOARD_YES_NO,
 )
-from app.src.utils.poll import translate_days_of_week_from_rus_to_eng
+from app.src.utils.translation import translate_days_of_week_from_rus_to_eng
 from app.src.validators.poll import (
     validate_poll_chat_id,
     validate_poll_days,
@@ -41,7 +41,9 @@ router: Router = Router()
 
 
 class PollForm(StatesGroup):
-    """Состояния для опроса."""
+    """
+    Состояния для команды "/add_poll".
+    """
 
     title = State()
     topic = State()
@@ -51,7 +53,6 @@ class PollForm(StatesGroup):
     time = State()
     is_allows_anonymous_answers = State()
     is_allows_multiple_answers = State()
-
     _init_message_id: int
 
 
