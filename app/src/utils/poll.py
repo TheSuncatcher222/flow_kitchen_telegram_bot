@@ -4,9 +4,6 @@ from datetime import (
     time,
 )
 
-from sqlalchemy.sql import select
-from sqlalchemy.sql.selectable import Select
-
 from app.src.crud.sync_crud.poll_sync_crud import poll_sync_crud
 from app.src.database.database import (
     RedisKeys,
@@ -18,7 +15,6 @@ from app.src.utils.redis_data import (
     redis_get,
     redis_set,
 )
-from app.src.validators.poll import DAYS_RUS_TO_ENG_CRON
 
 
 def check_if_poll_is_needed_to_send(
@@ -55,16 +51,15 @@ def get_all_polls() -> list[dict[str, any]]:
         return all_polls['all_polls']
 
     with sync_session_maker() as session:
-        query: Select = select(Poll)
-        queryset: list[Poll] = (session.execute(query)).scalars().all()
+        polls: list[Poll] = poll_sync_crud.retrieve_all(session=session)
 
-    if len(queryset) == 0:
+    if len(polls) == 0:
         redis_set(
             key=RedisKeys.POLL_ALL,
             value={'all_polls': []},
         )
 
-    all_polls: list[dict[str, any]] = parse_polls_to_redis(polls=queryset)
+    all_polls: list[dict[str, any]] = parse_polls_to_redis(polls=polls)
     redis_set(
         key=RedisKeys.POLL_ALL,
         value={'all_polls': all_polls},
@@ -136,12 +131,3 @@ def parse_polls_to_redis(polls: list[Poll]) -> list[dict[str, any]]:
         for poll
         in polls
     ]
-
-
-def translate_days_of_week_from_rus_to_eng(
-    send_days_of_week_list: list[str],
-) -> list[str]:
-    """
-    Преобразует дни недели из русского в английский.
-    """
-    return [DAYS_RUS_TO_ENG_CRON[day.lower()] for day in send_days_of_week_list]
