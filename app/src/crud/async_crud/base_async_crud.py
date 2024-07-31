@@ -2,14 +2,15 @@
 Модуль базового класса асинхронных CRUD запросов в базу данных.
 """
 
-from datetime import datetime
 
 from sqlalchemy.sql import (
+    delete,
     insert,
     select,
     update,
 )
 from sqlalchemy.sql.dml import (
+    Delete,
     Insert,
     Update,
 )
@@ -119,7 +120,7 @@ class BaseAsyncCrud():
 
         return obj
 
-    async def delete_soft_by_id(
+    async def delete_by_id(
         self,
         *,
         obj_id: int,
@@ -127,23 +128,10 @@ class BaseAsyncCrud():
         perform_commit: bool = True,
     ) -> None:
         """
-        Удаляет фиктивно один объект из базы данных по указанному id:
-            - обновляет поле is_deleted = True
-            - обновляет поле datetime_deleted = "сейчас"
+        Удаляет один объект из базы данных по указанному id.
         """
 
-        query: Select = select(self.model).where(self.model.id == obj_id)
-        if (await session.execute(query)).scalars().first() is None:
-            return
-
-        stmt: Update = (
-            update(self.model)
-            .where(self.model.id == obj_id)
-            .values(
-                is_deleted=True,
-                datetime_deleted=datetime.now(),
-            )
-        )
+        stmt: Delete = delete(self.model).where(self.model.id == obj_id)
         await session.execute(stmt)
 
         if perform_commit:
