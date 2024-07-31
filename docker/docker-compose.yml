@@ -29,6 +29,8 @@ services:
 
   postgresql:
     container_name: flow_kitchen_telegram_bot_postgresql
+    env_file:
+      - .env
     expose:
       - 5432
     hostname: flow-kitchen-telegram-bot-postgresql
@@ -44,6 +46,8 @@ services:
 
   pg_admin:
     container_name: flow_kitchen_telegram_bot_pg_admin
+    env_file:
+      - .env
     depends_on:
       - postgresql
     hostname: flow-kitchen-telegram-bot-pg-admin
@@ -65,11 +69,11 @@ services:
     depends_on:
       - postgresql
       - redis
+    env_file:
+      - .env
     hostname: flow-kitchen-telegram-bot-app
     image: thesuncatcher222/flow_kitchen_telegram_bot:latest
     restart: unless-stopped
-    volumes:
-      - ../app:/app
 
   # app_celery:
   #   command: sh -c "
@@ -79,13 +83,13 @@ services:
   #   container_name: flow_kitchen_telegram_bot_app_celery
   #   depends_on:
   #     - app
+  #   env_file:
+  #     - .env
   #   hostname: flow-kitchen-telegram-bot-app-celery
   #   image: thesuncatcher222/flow_kitchen_telegram_bot:latest
   #   ports:
   #     - "5554:5555"
   #   restart: unless-stopped
-  #   volumes:
-  #     - ../app:/app
 
 volumes:
 
