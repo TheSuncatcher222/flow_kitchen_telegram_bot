@@ -42,6 +42,9 @@ class BaseSyncCrud():
         perform_cleanup: bool = True,
         perform_commit: bool = True,
     ) -> Base:
+        """
+        Создает один объект в базе данных.
+        """
         self._check_unique(obj_data=obj_data, session=session)
 
         if perform_cleanup:
@@ -62,7 +65,9 @@ class BaseSyncCrud():
         offset: int = PAGINATION_OFFSET_DEFAULT,
         session: any,
     ) -> list[Base]:
-        """Получает несколько объектов из базы данных."""
+        """
+        Получает несколько объектов из базы данных.
+        """
         query: Select = select(self.model).limit(limit).offset(offset)
         result: list[Base] = (session.execute(query)).scalars().all()
         return result
@@ -77,6 +82,9 @@ class BaseSyncCrud():
         perform_cleanup: bool = True,
         perform_commit: bool = True,
     ) -> Base:
+        """
+        Обновляет один объект из базы данных по указанному id.
+        """
         if perform_check_unique:
             self._check_unique(obj_data=obj_data, session=session)
 
