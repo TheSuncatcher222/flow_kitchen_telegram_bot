@@ -65,6 +65,16 @@ class RedisKeys:
 
     PREFIX_SRC: str = 'src_cache_'
 
+    # Chat
+    CHAT: str = PREFIX_SRC + 'chat_'
+    CHAT_ALL_IDS: str = CHAT + 'all_ids'
+    CHAT_ALL_TITLES: str = CHAT + 'all_titles'
+
+    # Poll
+    POLL: str = PREFIX_SRC + 'poll_'
+    POLL_ALL: str = POLL + 'all'
+
+
 
 redis_engine: Redis = Redis(
     host=settings.REDIS_HOST,
