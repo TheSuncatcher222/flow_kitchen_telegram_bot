@@ -16,6 +16,11 @@ def make_row_keyboard(items: list[str]) -> ReplyKeyboardMarkup:
         resize_keyboard=True,
     )
 
+KEYBOARD_CANCEL: ReplyKeyboardMarkup = make_row_keyboard(
+    [
+        'Отмена',
+    ],
+)
 
 KEYBOARD_MAIN_MENU_ADMIN: ReplyKeyboardMarkup = make_row_keyboard(
     [
