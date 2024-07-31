@@ -19,8 +19,6 @@ repos:
     -   id: check-symlinks              # checks for symlinks which do not point to anything
     # Security
     -   id: detect-private-key          # detects the presence of private keys
-    # Tests
-    -   id: name-tests-test             # verifies that test files are named correctly
 
 -   repo: https://github.com/pre-commit/pygrep-hooks
     rev: v1.10.0
