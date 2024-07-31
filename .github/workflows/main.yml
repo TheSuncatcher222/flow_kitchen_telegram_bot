@@ -59,7 +59,7 @@ jobs:
     steps:
       - name: Clone Project to runner
         uses: actions/checkout@v4
-      - name: Copy docker-compose-project-prod.yml to server via ssh
+      - name: Copy docker-compose.yml to server via ssh
         uses: appleboy/scp-action@master
         with:
           host: ${{ secrets.SSH_HOST }}
@@ -73,7 +73,6 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USERNAME }}
           key: ${{ secrets.SSH_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }}
           script: |
             cd /home/kirill/flow_kitchen_telegram_bot
             sudo docker compose down
