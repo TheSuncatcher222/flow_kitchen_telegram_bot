@@ -1,7 +1,9 @@
 import asyncio
 from datetime import (
     date,
+    datetime,
     time,
+    timedelta,
 )
 
 from app.src.crud.sync_crud.poll_sync_crud import poll_sync_crud
@@ -11,11 +13,11 @@ from app.src.database.database import (
 )
 from app.src.models.poll import Poll
 from app.src.utils.bot_send_poll import bot_send_poll
+from app.src.utils.bot_stop_poll import bot_stop_poll
 from app.src.utils.redis_data import (
     redis_get,
     redis_set,
 )
-
 
 def check_if_poll_is_needed_to_send(
     now_time: time,
@@ -37,6 +39,45 @@ def check_if_poll_is_needed_to_send(
         and
         now_time >= time.fromisoformat(poll_data['send_time'])
     ):
+        return True
+
+    return False
+
+
+def check_if_poll_is_needed_to_stop_answers(
+    now_time: time,
+    poll_data: dict[str, any],
+    today_date: date,
+) -> bool:
+    """
+    Проверяет, нужно ли останавливать опрос.
+    """
+    block_answer_delta_hours: int | None = poll_data['block_answer_delta_hours']
+
+    if (
+        not block_answer_delta_hours
+        or
+        poll_data['is_poll_is_blocked']
+        or
+        (
+            not poll_data['last_send_date']
+            or 
+            poll_data['last_send_date'] == 'None'
+        )
+
+    ):
+        return False
+
+    last_send_datetime: datetime = datetime.combine(
+        date=date.fromisoformat(poll_data['last_send_date']),
+        time=time.fromisoformat(poll_data['send_time']),
+    ) + timedelta(hours=block_answer_delta_hours)
+    now_datetime: datetime = datetime.combine(
+        date=today_date,
+        time=now_time,
+    )
+    if now_datetime > last_send_datetime:
+        stop_poll(poll_data=poll_data)
         return True
 
     return False
@@ -97,6 +138,31 @@ def send_poll(poll_data: dict[str, any]) -> int | None:
         pass
 
     return poll_id
+
+
+def stop_poll(poll_data: dict[str, any]) -> None:
+    """
+    Останавливает опрос в телеграм чате.
+    """
+    loop: asyncio.AbstractEventLoop = asyncio.get_event_loop()
+    if loop.is_closed():
+        loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop=loop)
+
+    try:
+        loop.run_until_complete(
+            bot_stop_poll(poll_data=poll_data),
+        )
+
+    except Exception as err:
+        # TODO. Обработать ошибку.
+        pass
+
+    finally:
+        # TODO. Отправить сообщение в телеграм чат.
+        pass
+
+    return
 
 
 def mark_poll_as_sended(
