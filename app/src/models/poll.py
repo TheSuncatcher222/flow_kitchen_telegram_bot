@@ -12,6 +12,7 @@ from sqlalchemy.orm import (
     Mapped,
     mapped_column,
 )
+from sqlalchemy.sql.expression import false as sql_false
 
 from app.src.database.database import (
     Base,
@@ -52,6 +53,10 @@ class Poll(Base):
 
     # Fields.
 
+    block_answer_delta_hours: Mapped[int] = mapped_column(
+        comment='через сколько часов после публикации блокировать ответы',
+        server_default='24',
+    )
     chat_id: Mapped[str] = mapped_column(
         String(length=PollParams.CHAT_ID_LEN_MAX),
         comment='id чата/группы Telegram',
@@ -67,6 +72,10 @@ class Poll(Base):
     )
     is_allows_multiple_answers: Mapped[bool] = mapped_column(
         comment='статус множественного выбора ответов',
+    )
+    is_poll_is_blocked: Mapped[bool] = mapped_column(
+        comment='статус блокировки опроса',
+        server_default=sql_false(),
     )
     last_send_date: Mapped[Date] = mapped_column(
         Date(),
@@ -114,10 +123,12 @@ class Poll(Base):
         """
         data: dict[str, any] = {
             'id': self.id,
+            'block_answer_delta_hours': self.block_answer_delta_hours,
             'chat_id': self.chat_id,
             'dates_skip': self.dates_skip,
             'is_allows_anonymous_answers': self.is_allows_anonymous_answers,
             'is_allows_multiple_answers': self.is_allows_multiple_answers,
+            'is_poll_is_blocked': self.is_poll_is_blocked,
             'last_send_date': self.last_send_date,
             'message_id': self.message_id,
             'topic': self.topic,
