@@ -110,7 +110,7 @@ async def my_polls_ask_action(
     await state.update_data(title=message.text)
 
     with sync_session_maker() as session:
-        poll: Poll = poll_sync_crud.retrieve_by_title(
+        poll: Poll | None = poll_sync_crud.retrieve_by_title(
             obj_title=message.text,
             session=session,
         )
@@ -141,6 +141,7 @@ async def my_polls_ask_action(
             f'Чат: {poll_data["chat_id"]}\n'
             f'Дни: {poll_data["send_days_of_week_list"]}\n'
             f'Время: {poll_data["send_time"]}\n'
+            f'Закрытие опроса через, ч: {poll_data["block_answer_delta_hours"]}\n'
             f'Анонимные ответы: {poll_data["is_allows_anonymous_answers"]}\n'
             f'Множественные ответы: {poll_data["is_allows_multiple_answers"]}\n'
             f'Дни на паузе:{"".join(poll_data_dates_skip)}'
