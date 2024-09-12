@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     BOT_ADMIN_IDS: str
     BOT_TOKEN: str
     DEBUG_DB: bool = True
+    DEBUG_POLL_CACHE: bool = False
 
 
 settings = Settings()
