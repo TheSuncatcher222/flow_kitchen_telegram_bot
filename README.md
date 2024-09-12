@@ -62,7 +62,7 @@ cd ../../docker
 ✅ Запустить Docker (убедитесь, что `docker daemon` запущен в системе!)
 
 ```
-docker-compose -f docker/docker-compose.yml --env-file app/src/config/.env up -d
+docker-compose -f docker/docker-compose-develop.yml --env-file app/src/config/.env up -d
 ```
 
 ___
