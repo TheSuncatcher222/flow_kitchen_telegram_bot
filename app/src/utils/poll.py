@@ -6,7 +6,10 @@ from datetime import (
     timedelta,
 )
 
-from app.src.config.config import settings
+from app.src.config.config import (
+    TimeIntervals,
+    settings,
+)
 from app.src.crud.sync_crud.poll_sync_crud import poll_sync_crud
 from app.src.database.database import (
     RedisKeys,
@@ -90,7 +93,7 @@ def get_all_polls() -> list[dict[str, any]]:
     """
     if not settings.DEBUG_POLL_CACHE:
         all_polls: None | dict[list[dict[str, any]]] = redis_get(key=RedisKeys.POLL_ALL)
-        if isinstance(all_polls, dict):
+        if isinstance(all_polls, dict) and 'all_polls' in all_polls:
             return all_polls['all_polls']
 
     with sync_session_maker() as session:
@@ -106,6 +109,7 @@ def get_all_polls() -> list[dict[str, any]]:
     redis_set(
         key=RedisKeys.POLL_ALL,
         value={'all_polls': all_polls},
+        ex_sec=TimeIntervals.SECONDS_IN_1_DAY,
     )
 
     return all_polls
