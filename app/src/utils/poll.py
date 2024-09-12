@@ -6,6 +6,7 @@ from datetime import (
     timedelta,
 )
 
+from app.src.config.config import settings
 from app.src.crud.sync_crud.poll_sync_crud import poll_sync_crud
 from app.src.database.database import (
     RedisKeys,
@@ -61,7 +62,7 @@ def check_if_poll_is_needed_to_stop_answers(
         or
         (
             not poll_data['last_send_date']
-            or 
+            or
             poll_data['last_send_date'] == 'None'
         )
 
@@ -71,12 +72,12 @@ def check_if_poll_is_needed_to_stop_answers(
     last_send_datetime: datetime = datetime.combine(
         date=date.fromisoformat(poll_data['last_send_date']),
         time=time.fromisoformat(poll_data['send_time']),
-    ) + timedelta(hours=block_answer_delta_hours)
+    )
     now_datetime: datetime = datetime.combine(
         date=today_date,
         time=now_time,
     )
-    if now_datetime > last_send_datetime:
+    if now_datetime > last_send_datetime + timedelta(hours=block_answer_delta_hours):
         stop_poll(poll_data=poll_data)
         return True
 
@@ -87,9 +88,10 @@ def get_all_polls() -> list[dict[str, any]]:
     """
     Возвращает список всех опросов из базы данных.
     """
-    all_polls: None | dict[list[dict[str, any]]] = redis_get(key=RedisKeys.POLL_ALL)
-    if isinstance(all_polls, dict):
-        return all_polls['all_polls']
+    if not settings.DEBUG_POLL_CACHE:
+        all_polls: None | dict[list[dict[str, any]]] = redis_get(key=RedisKeys.POLL_ALL)
+        if isinstance(all_polls, dict):
+            return all_polls['all_polls']
 
     with sync_session_maker() as session:
         polls: list[Poll] = poll_sync_crud.retrieve_all(session=session)
@@ -165,7 +167,7 @@ def stop_poll(poll_data: dict[str, any]) -> None:
     return
 
 
-def mark_poll_as_sended(
+def mark_poll_as_sended_and_unblocked(
     poll_data: dict[str, any],
     message_id: int,
     today_date: date,
@@ -176,6 +178,7 @@ def mark_poll_as_sended(
             obj_data={
                 'last_send_date': today_date,
                 'message_id': message_id,
+                'is_poll_is_blocked': False,
             },
             session=session,
             perform_check_unique=False,

@@ -8,7 +8,7 @@ from app.src.utils.poll import (
     check_if_poll_is_needed_to_send,
     check_if_poll_is_needed_to_stop_answers,
     get_all_polls,
-    mark_poll_as_sended,
+    mark_poll_as_sended_and_unblocked,
     send_poll,
     stop_poll,
 )
@@ -40,7 +40,7 @@ def send_polls() -> None:
         )
         if is_needed_to_send:
             message_id: int | None = send_poll(poll_data=poll_data)
-            mark_poll_as_sended(
+            mark_poll_as_sended_and_unblocked(
                 poll_data=poll_data,
                 message_id=message_id,
                 today_date=today_date,
@@ -55,7 +55,7 @@ def send_polls() -> None:
         if is_needed_to_stop_answers:
             stop_poll(poll_data=poll_data)
             any_changes: bool = True
-    
+
     if any_changes:
         redis_delete(key=RedisKeys.POLL_ALL)
 
