@@ -28,24 +28,28 @@ def check_if_poll_is_needed_to_send(
     poll_data: dict[str, any],
     today_date_str: str,
     today_day_of_week: str,
-) -> bool:
+) -> tuple[bool, bool]:
     """
     Проверяет, нужно ли отправлять опрос.
+
+    Возвращает кортеж:
+        1) bool - нужно ли отправить
+        2) bool - нужно ли не отправлять, но пометить отправленным
     """
     if poll_data['last_send_date'] == today_date_str:
-        return False
+        return False, False
 
     if today_date_str in poll_data['dates_skip']:
-        return False
+        return False, True
 
     if (
         today_day_of_week in poll_data['send_days_of_week_list']
         and
         now_time >= time.fromisoformat(poll_data['send_time'])
     ):
-        return True
+        return True, True
 
-    return False
+    return False, False
 
 
 def check_if_poll_is_needed_to_stop_answers(
@@ -177,12 +181,20 @@ def mark_poll_as_sended_and_unblocked(
     today_date: date,
 ) -> None:
     with sync_session_maker() as session:
+        poll: Poll = poll_sync_crud.retrieve_by_id(
+            obj_id=poll_data['id'],
+            session=session,
+        )
+        skip_days: list[str] = [date for date in poll.dates_skip if date <= str(today_date)]
+        skip_days.sort()
+
         poll_sync_crud.update_by_id(
             obj_id=poll_data['id'],
             obj_data={
                 'last_send_date': today_date,
                 'message_id': message_id,
                 'is_poll_is_blocked': False,
+                'skip_days': skip_days,
             },
             session=session,
             perform_check_unique=False,
