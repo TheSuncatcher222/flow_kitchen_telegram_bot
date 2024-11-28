@@ -32,17 +32,20 @@ def send_polls() -> None:
     any_changes: bool = False
 
     for poll_data in polls:
-        is_needed_to_send: bool = check_if_poll_is_needed_to_send(
+        is_needed_to_send, is_needed_to_mark_sended = check_if_poll_is_needed_to_send(
             now_time=now_time,
             poll_data=poll_data,
             today_date_str=today_date_str,
             today_day_of_week=today_day_of_week,
         )
+
+        message_id: None = None
         if is_needed_to_send:
             message_id: int | None = send_poll(poll_data=poll_data)
+        if is_needed_to_send or is_needed_to_mark_sended:
             mark_poll_as_sended_and_unblocked(
                 poll_data=poll_data,
-                message_id=message_id,
+                message_id=message_id if message_id else poll_data['message_id'],
                 today_date=today_date,
             )
             any_changes: bool = True
