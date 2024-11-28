@@ -20,9 +20,7 @@ async def bot_stop_poll(
     with sync_session_maker() as session:
         poll_sync_crud.update_by_id(
             obj_id=poll_data['id'],
-            obj_data={
-                'is_poll_is_blocked': True,
-            },
+            obj_data={'is_poll_is_blocked': True},
             session=session,
             perform_check_unique=False,
             perform_cleanup=False,
