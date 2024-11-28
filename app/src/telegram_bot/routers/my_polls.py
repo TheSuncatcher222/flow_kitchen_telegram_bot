@@ -18,9 +18,8 @@ from app.src.database.database import (
     sync_session_maker,
 )
 from app.src.utils.auth import check_if_user_is_admin
-from app.src.utils.poll import (
-    get_all_polls,
-)
+from app.src.utils.date import parse_dates_from_text
+from app.src.utils.poll import get_all_polls
 from app.src.utils.redis_data import redis_delete
 from app.src.utils.reply_keyboard import (
     make_row_keyboard,
@@ -175,36 +174,117 @@ async def validate_action(
     """
     Определяет необходимое действие с опросом.
     """
-    if message.text == 'Удалить':
-        await _validate_action_delete(
-            message=message,
-            state=state,
-        )
+    if message.text == 'Возобновить':
+        return await _validate_action_resume(message=message, state=state)
     elif message.text == 'Приостановить':
-        await _validate_action_pause(
-            message=message,
-            state=state,
-        )
-    elif message.text == 'Возобновить':
-        await _validate_action_resume(
-            message=message,
-            state=state,
-        )
+        return await _validate_action_pause(message=message, state=state)
+    elif message.text == 'Удалить':
+        return await _validate_action_delete(message=message, state=state)
 
-    # await message.answer(
-    #     text=(
-    #         'В какие даты отменять опрос? '
-    #         'Например, "01.01, 02.02" или '
-    #         'интервал "01.01 - 02.02". '
-    #         '\n\n'
-    #         'Пожалуйста, соблюдайте синтаксис!'
-    #         '\n\n'
-    #         'Если нужно убрать дни отмены, отправьте "отмена".'
-    #     ),
-    #     reply_markup=None,
-    # )
-    # await state.set_state(state=MyPollsStatesGroup.skipp_days)
-    # return
+
+@router.message(
+    MyPollsStatesGroup.skip_days,
+)
+async def pause_poll(
+    message: Message,
+    state: FSMContext,
+) -> None:
+    """
+    Добавляет указанные даты в Poll.dates_skip, чтобы опрос не отправлялся.
+    """
+    try:
+        dates: list[str] = parse_dates_from_text(text=message.text)
+    except Exception:
+        await message.answer(
+            text=('Неправильно указаны даты! Попробуйте еще раз.'),
+            reply_markup=KEYBOARD_CANCEL,
+        )
+        return
+
+    try:
+        with sync_session_maker() as session:
+            poll_data: dict[str, any] = await state.get_data()
+            poll: Poll = poll_sync_crud.retrieve_by_title(
+                obj_title=poll_data['title'],
+                session=session,
+            )
+            dates.extend(poll.dates_skip)
+            dates.sort()
+            poll_sync_crud.update_by_id(
+                obj_id=poll.id,
+                obj_data={'dates_skip': dates},
+                session=session,
+                perform_check_unique=False,
+            )
+    except Exception as err:
+        await message.answer(
+            text=(f'Произошла ошибка изменения дат:\t{err}'),
+            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
+        )
+    else:
+        await message.answer(
+            text=('Даты успешно добавлены!'),
+            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
+        )
+        redis_delete(key=RedisKeys.POLL_ALL)
+
+    await state.clear()
+    return
+
+
+@router.message(
+    MyPollsStatesGroup.resume_days,
+)
+async def resume_poll(
+    message: Message,
+    state: FSMContext,
+) -> None:
+    """
+    Убирает указанные даты из Poll.dates_skip, чтобы опрос отправлялся.
+    """
+    if message.text != 'Очистить':
+        try:
+            dates: list[str] = parse_dates_from_text(text=message.text)
+        except Exception:
+            await message.answer(
+                text=('Неправильно указаны даты! Попробуйте еще раз.'),
+                reply_markup=KEYBOARD_CANCEL,
+            )
+            return
+
+    try:
+        with sync_session_maker() as session:
+            poll_data: dict[str, any] = await state.get_data()
+            poll: Poll = poll_sync_crud.retrieve_by_title(
+                obj_title=poll_data['title'],
+                session=session,
+            )
+            if message.text != 'Очистить':
+                dates: list[str] = [i for i in poll.dates_skip if i not in dates]
+                dates.sort()
+            else:
+                dates: list = []
+            poll_sync_crud.update_by_id(
+                obj_id=poll.id,
+                obj_data={'dates_skip': dates},
+                session=session,
+                perform_check_unique=False,
+            )
+    except Exception as err:
+        await message.answer(
+            text=(f'Произошла ошибка изменения дат:\t{err}'),
+            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
+        )
+    else:
+        await message.answer(
+            text=('Даты успешно удалены!'),
+            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
+        )
+        redis_delete(key=RedisKeys.POLL_ALL)
+
+    await state.clear()
+    return
+
 
 async def _validate_action_delete(
     message: Message,
@@ -233,7 +313,6 @@ async def _validate_action_delete(
 
     redis_delete(key=RedisKeys.POLL_ALL)
 
-
     await state.clear()
 
     return
@@ -249,32 +328,12 @@ async def _validate_action_pause(
     await message.answer(
         text=(
             'В какие даты отменять опрос? '
-            'Например, "01.01, 02.02" или '
-            'интервал "01.01 - 02.02". '
+            'Например, "01.01, 27.02-30.03, 30.12 - 09.01"'
             '\n\n'
             'Пожалуйста, соблюдайте синтаксис!'
-            '\n\n'
-            'Если нужно убрать все дни отмены, отправьте "очистить".'
         ),
-        reply_markup=make_row_keyboard(
-            items=[
-                'Очистить',
-                'Отмена',
-            ],
-        ),
+        reply_markup=KEYBOARD_CANCEL,
     )
-
-    TODO: bool = True
-    if TODO:
-        await message.answer(
-            text=(
-                'Функционал еще не завезли ;('
-            ),
-            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
-        )
-        await state.clear()
-        return
-
     await state.set_state(state=MyPollsStatesGroup.skip_days)
     return
 
@@ -295,20 +354,15 @@ async def _validate_action_resume(
             'Пожалуйста, соблюдайте синтаксис!'
             '\n\n'
             'Для отмены нажмите "отмена".'
+            '\n\n'
+            'Если нужно убрать все дни отмены, отправьте "Очистить".'
         ),
-        reply_markup=KEYBOARD_CANCEL,
+        reply_markup=make_row_keyboard(
+            items=[
+                'Очистить',
+                'Отмена',
+            ],
+        ),
     )
-
-    TODO: bool = True
-    if TODO:
-        await message.answer(
-            text=(
-                'Функционал еще не завезли ;('
-            ),
-            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
-        )
-        await state.clear()
-        return
-
-    await state.set_state(state=MyPollsStatesGroup.skip_days)
+    await state.set_state(state=MyPollsStatesGroup.resume_days)
     return
