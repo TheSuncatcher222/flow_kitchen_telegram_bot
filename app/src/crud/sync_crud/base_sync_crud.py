@@ -2,6 +2,7 @@
 Модуль базового класса синхронных CRUD запросов в базу данных.
 """
 
+from sqlalchemy.orm import Session
 from sqlalchemy.sql import (
     delete,
     select,
@@ -38,7 +39,7 @@ class BaseSyncCrud():
         *,
         obj_data: dict[str, any],
         # TODO. Узнать тип.
-        session: any,
+        session: Session,
         perform_cleanup: bool = True,
         perform_commit: bool = True,
     ) -> Base:
@@ -63,7 +64,7 @@ class BaseSyncCrud():
         *,
         limit: int = PAGINATION_LIMIT_DEFAULT,
         offset: int = PAGINATION_OFFSET_DEFAULT,
-        session: any,
+        session: Session,
     ) -> list[Base]:
         """
         Получает несколько объектов из базы данных.
@@ -72,12 +73,25 @@ class BaseSyncCrud():
         result: list[Base] = (session.execute(query)).scalars().all()
         return result
 
+    def retrieve_by_id(
+        self,
+        *,
+        obj_id: int,
+        session: Session,
+    ) -> Base:
+        """
+        Получает один объект из базы данных по указанному id.
+        """
+        query: Select = select(self.model).where(self.model.id == obj_id)
+        result: Base = (session.execute(query)).scalars().first()
+        return result
+
     def update_by_id(
         self,
         *,
         obj_id: int,
         obj_data: dict[str, any],
-        session: any,
+        session: Session,
         perform_check_unique: bool = True,
         perform_cleanup: bool = True,
         perform_commit: bool = True,
@@ -108,7 +122,7 @@ class BaseSyncCrud():
         self,
         *,
         obj_id: int,
-        session: any,
+        session: Session,
         perform_commit: bool = True,
     ) -> None:
         """
@@ -126,7 +140,7 @@ class BaseSyncCrud():
         self,
         *,
         obj_data: dict[str, any],
-        session: any,
+        session: Session,
     ) -> None:
         """Проверяет уникальность переданных значений."""
         if self.unique_columns is None:
