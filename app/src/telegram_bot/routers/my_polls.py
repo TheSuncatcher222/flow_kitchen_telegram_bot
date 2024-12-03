@@ -39,7 +39,7 @@ class MyPollsStatesGroup(StatesGroup):
     """
     title = State()
     action = State()
-    skip_days = State()
+    dates_skip = State()
     resume_days = State()
 
 
@@ -183,7 +183,7 @@ async def validate_action(
 
 
 @router.message(
-    MyPollsStatesGroup.skip_days,
+    MyPollsStatesGroup.dates_skip,
 )
 async def pause_poll(
     message: Message,
@@ -334,7 +334,7 @@ async def _validate_action_pause(
         ),
         reply_markup=KEYBOARD_CANCEL,
     )
-    await state.set_state(state=MyPollsStatesGroup.skip_days)
+    await state.set_state(state=MyPollsStatesGroup.dates_skip)
     return
 
 

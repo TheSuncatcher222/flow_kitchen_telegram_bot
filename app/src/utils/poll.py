@@ -185,8 +185,8 @@ def mark_poll_as_sended_and_unblocked(
             obj_id=poll_data['id'],
             session=session,
         )
-        skip_days: list[str] = [date for date in poll.dates_skip if date <= str(today_date)]
-        skip_days.sort()
+        dates_skip: list[str] = [date for date in poll.dates_skip if date <= str(today_date)]
+        dates_skip.sort()
 
         poll_sync_crud.update_by_id(
             obj_id=poll_data['id'],
@@ -194,7 +194,7 @@ def mark_poll_as_sended_and_unblocked(
                 'last_send_date': today_date,
                 'message_id': message_id,
                 'is_poll_is_blocked': False,
-                'skip_days': skip_days,
+                'dates_skip': dates_skip,
             },
             session=session,
             perform_check_unique=False,
