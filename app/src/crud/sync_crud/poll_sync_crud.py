@@ -1,3 +1,4 @@
+from sqlalchemy.orm import Session
 from sqlalchemy.sql import select
 from sqlalchemy.sql.selectable import Select
 
@@ -12,7 +13,7 @@ class PollSyncCrud(BaseSyncCrud):
         self,
         *,
         obj_title: str,
-        session: any,
+        session: Session,
     ) -> Poll | None:
         """
         Получает один объект из базы данных по названию.
