@@ -26,6 +26,7 @@ KEYBOARD_MAIN_MENU_ADMIN: ReplyKeyboardMarkup = make_row_keyboard(
     [
         '/add_poll',
         '/my_polls',
+        '/clear_cache',
     ],
 )
 
