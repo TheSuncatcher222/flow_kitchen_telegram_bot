@@ -51,6 +51,8 @@ def validate_poll_title(value: str) -> str:
     """
     Валидирует название опроса.
     """
+    if value.strip().startswith('/'):
+        raise ValueError('Название опроса не должно начинаться с "/".')
     if len(value) > PollParams.TITLE_LEN_MAX:
         raise ValueError(
             'Название опроса для панели управления слишком длинное. '
@@ -63,6 +65,8 @@ def validate_poll_topic(value: str) -> str:
     """
     Валидирует тему опроса.
     """
+    if value.strip().startswith('/'):
+        raise ValueError('Тема опроса не должна начинаться с "/".')
     if len(value) > PollParams.TOPIC_LEN_MAX:
         raise ValueError(
             'Тема опроса для панели управления слишком длинная. '
@@ -82,6 +86,8 @@ def validate_poll_options(value: str) -> list[str]:
             'Необходимо указать от 2 до 10 вариантов ответов.',
         )
     for option in options:
+        if option.strip().startswith('/'):
+            raise ValueError('Варианты ответов не должны начинаться с "/".')
         if len(option) > PollParams.OPTION_LEN_MAX:
             raise ValueError(
                 'Варианты ответов для панели управления слишком длинные. '
@@ -110,7 +116,7 @@ def validate_poll_days(value: str) -> list[str]:
     for day in days:
         if day.lower() not in DAYS_RUS_TO_ENG_CRON:
             raise ValueError(
-                'Дни недели необходимо указанывать кратко через запятую. '
+                'Дни недели необходимо указывать кратко через запятую. '
                 'Допустимые значения: "пн", "вт", "ср", "чт", "пт", "сб", "вс".',
             )
     return days
