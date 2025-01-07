@@ -72,7 +72,6 @@ def check_if_poll_is_needed_to_stop_answers(
             or
             poll_data['last_send_date'] == 'None'
         )
-
     ):
         return False
 
@@ -185,7 +184,7 @@ def mark_poll_as_sended_and_unblocked(
             obj_id=poll_data['id'],
             session=session,
         )
-        dates_skip: list[str] = [date for date in poll.dates_skip if date <= str(today_date)]
+        dates_skip: list[str] = [date_skip for date_skip in poll.dates_skip if date_skip > str(today_date)]
         dates_skip.sort()
 
         poll_sync_crud.update_by_id(
@@ -199,7 +198,6 @@ def mark_poll_as_sended_and_unblocked(
             session=session,
             perform_check_unique=False,
             perform_cleanup=False,
-            perform_commit=True,
         )
     return
 
