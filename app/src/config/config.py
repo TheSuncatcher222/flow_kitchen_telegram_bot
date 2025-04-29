@@ -39,7 +39,8 @@ class Settings(BaseSettings):
     ADMIN_SECRET_KEY: str = 'string'
 
     """Настройки Telegram Bot."""
-    BOT_ADMIN_IDS: str
+    BOT_ADMIN_IDS: list[str]
+    BOT_DEVELOPER_IDS: list[str]
     BOT_TOKEN: str
     DEBUG_DB: bool = True
     DEBUG_POLL_CACHE: bool = False
