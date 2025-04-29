@@ -1,10 +1,9 @@
-# Celery.
-celerybeat-schedule
-
-# Environment.
-.env
-venv/
-
 # Python cache.
 __pycache__/
 .pyc
+
+# Security
+.env
+
+# Virtual environment
+.venv/
