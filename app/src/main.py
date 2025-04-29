@@ -1,27 +1,20 @@
-import asyncio
-import logging
-import os
-import sys
+from asyncio import run as asyncio_run
+from os import path as os_path
+from sys import path as sys_path
 
 # INFO: добавляет корневую директорию проекта в sys.path для возможности
 #       использования абсолютных путей импорта данных из модулей.
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
+sys_path.append(os_path.abspath(os_path.join(os_path.dirname(__file__), '../..')))
 
-from app.src.database.database import RedisKeys
 from app.src.telegram_bot.bot import bot
 from app.src.telegram_bot.dispatcher import dp
-from app.src.utils.redis_data import redis_delete
+from app.src.scheduler.scheduler import scheduler
 
 
-async def main():
-    for key in (
-        RedisKeys.POLL_ALL,
-        RedisKeys.CHAT_ALL_TITLES,
-    ):
-        redis_delete(key=key)
+async def main() -> None:
+    scheduler.start()
     await dp.start_polling(bot)
 
 
 if __name__ == '__main__':
-    logging.basicConfig(level=logging.DEBUG)
-    asyncio.run(main())
+    asyncio_run(main())
