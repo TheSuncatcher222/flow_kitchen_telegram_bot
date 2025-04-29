@@ -6,10 +6,7 @@ from typing import AsyncGenerator
 
 from redis import Redis
 from sqlalchemy import create_engine
-from sqlalchemy.orm import (
-    DeclarativeBase,
-    sessionmaker,
-)
+from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -33,18 +30,14 @@ async_session_maker: async_sessionmaker = async_sessionmaker(
     expire_on_commit=False,
 )
 
+sync_engine = create_engine(
+    DATABASE_SYNC_URL,
+    echo=settings.DEBUG_DB,
+)
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:
     async with async_session_maker() as session:
         yield session
-
-
-sync_engine = create_engine(
-    url=DATABASE_SYNC_URL,
-    echo=settings.DEBUG_DB,
-)
-
-sync_session_maker: sessionmaker = sessionmaker(bind=sync_engine)
 
 
 class Base(DeclarativeBase):
@@ -56,23 +49,26 @@ class TableNames:
     Класс представления названий таблиц в базе данных.
     """
 
-    CHAT: str = 'table_chat'
-    POLL: str = 'table_poll'
+    chat: str = 'table_chat'
+    course: str = 'table_course'
+    poll: str = 'table_poll'
+    tariff: str = 'table_tariff'
+    user: str = 'table_user'
 
 
 class RedisKeys:
     """Класс представления Redis ключей."""
 
-    PREFIX_SRC: str = 'src_cache_'
+    __PREFIX_SRC: str = 'src_cache_'
 
     # Chat
-    CHAT: str = PREFIX_SRC + 'chat_'
-    CHAT_ALL_IDS: str = CHAT + 'all_ids'
-    CHAT_ALL_TITLES: str = CHAT + 'all_titles'
+    __CHAT: str = __PREFIX_SRC + 'chat_'
+    CHAT_ALL_IDS: str = __CHAT + 'all_ids'
+    CHAT_ALL_TITLES: str = __CHAT + 'all_titles'
 
     # Poll
-    POLL: str = PREFIX_SRC + 'poll_'
-    POLL_ALL: str = POLL + 'all'
+    __POLL: str = __PREFIX_SRC + 'poll_'
+    POLL_ALL: str = __POLL + 'all'
 
 
 
