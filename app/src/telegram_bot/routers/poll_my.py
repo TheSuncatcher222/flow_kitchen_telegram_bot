@@ -1,126 +1,107 @@
+from asyncio import sleep as async_sleep
 from typing import TYPE_CHECKING
 
 from aiogram import (
     Router,
     F,
 )
-from aiogram.filters import Command
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import (
     StatesGroup,
     State,
 )
-from aiogram.types import Message
-
-from app.src.crud.sync_crud.poll_sync_crud import poll_sync_crud
-from app.src.database.database import (
-    RedisKeys,
-    sync_session_maker,
+from aiogram.types import (
+    Message,
+    ReplyKeyboardRemove,
 )
-from app.src.utils.auth import check_if_user_is_admin
+
+from app.src.crud.chat import chat_crud
+from app.src.crud.poll import poll_crud
+from app.src.database.database import async_session_maker
+from app.src.telegram_bot.routers.start import command_start
+from app.src.scheduler.scheduler import scheduler
+from app.src.utils.auth import IsAdmin
+from app.src.utils.message import delete_messages_list
 from app.src.utils.date import parse_dates_from_text
-from app.src.utils.poll import get_all_polls
-from app.src.utils.redis_data import redis_delete
+from app.src.utils.poll import get_all_polls_titles
 from app.src.utils.reply_keyboard import (
+    RoutersCommands,
+    get_keyboard_main_menu,
     make_row_keyboard,
     KEYBOARD_CANCEL,
-    KEYBOARD_MAIN_MENU_ADMIN,
 )
-from app.src.validators.poll import validate_poll_exists
 
 if TYPE_CHECKING:
     from app.src.models.poll import Poll
 
 router: Router = Router()
 
+
 class MyPollsStatesGroup(StatesGroup):
     """
-    Состояния для команды "/my_polls".
+    Состояния для роутера.
     """
     title = State()
     action = State()
     dates_skip = State()
     resume_days = State()
+    _init_message_id: int
 
 
 @router.message(
-    Command('my_polls'),
+    IsAdmin(),
+    F.text == RoutersCommands.POLL_MY,
 )
 async def my_polls_ask_title(
     message: Message,
     state: FSMContext,
 ) -> None:
     """
-    Обрабатывает команду /my_polls.
+    Обрабатывает команду "Мои опросы".
 
     Показывает список опросов.
-    Спрашивает название опроса в панели управления.
     """
-    if not check_if_user_is_admin(user_id=message.from_user.id):
+    await state.update_data(_init_message_id=message.message_id)
+
+    polls_all_titles: list[str | None] = await get_all_polls_titles()
+    if not polls_all_titles:
+        await message.answer(text='Нет активных опросов.')
+        await async_sleep(1)
+        await __cancel(message=message, state=state)
         return
 
-    all_polls: list[dict[str, any]] = get_all_polls()
-    if not all_polls:
-        await message.answer(
-            text=(
-                'Нет опросов'
-            ),
-            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
-        )
-        return
-
-    all_polls_titles = [poll['title'] for poll in all_polls]
-    await message.answer(
-        text=(
-            'Какой опрос вас интересует?'
-        ),
-        reply_markup=make_row_keyboard(
-            items=all_polls_titles,
-        ),
-    )
     await state.set_state(state=MyPollsStatesGroup.title)
-    return
+
+    await message.answer(
+        text='Какой опрос интересует?',
+        reply_markup=make_row_keyboard(rows=(polls_all_titles, (RoutersCommands.HOME,))),
+    )
 
 
-@router.message(
-    MyPollsStatesGroup.title,
-)
+@router.message(MyPollsStatesGroup.title)
 async def my_polls_ask_action(
     message: Message,
     state: FSMContext,
 ) -> None:
     """
-    Устанавливает название опроса в панели управления.
-    Спрашивает даты отмены.
+    Спрашивает действие для опроса.
     """
-    try:
-        validate_poll_exists(value=message.text)
-    except ValueError as e:
-        all_polls: list[dict[str, any]] = get_all_polls()
-        all_polls_titles = [poll['title'] for poll in all_polls]
+    if message.text == RoutersCommands.HOME:
+        await __cancel(message=message, state=state)
+        return
+
+    async with async_session_maker() as session:
+        poll: Poll | None = await poll_crud.retrieve_by_title(obj_title=message.text, session=session)
+    if not poll:
+        polls_all_titles: list[str | None] = await get_all_polls_titles()
         await message.answer(
-            text=str(e),
-            reply_markup=make_row_keyboard(
-                items=all_polls_titles,
-            ),
+            text='Опрос не найден. Нужно выбрать при помощи клавиатуры:',
+            reply_markup=make_row_keyboard(rows=(polls_all_titles, (RoutersCommands.HOME,))),
         )
         return
 
     await state.update_data(title=message.text)
-
-    with sync_session_maker() as session:
-        poll: Poll | None = poll_sync_crud.retrieve_by_title(
-            obj_title=message.text,
-            session=session,
-        )
-    if poll is None:
-        await message.answer(
-            text=(
-                'Опрос не найден'
-            ),
-            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
-        )
-        return
+    await state.set_state(state=MyPollsStatesGroup.action)
 
     poll_data: dict[str, any] = poll.to_dict_repr(
         represent_date_as_str=True,
@@ -132,41 +113,35 @@ async def my_polls_ask_action(
         for data
         in poll_data['dates_skip']
     ]
+    async with async_session_maker() as session:
+        chat_title: str = (await chat_crud.retrieve_by_chat_id(obj_chat_id=poll_data['chat_id'], session=session)).title
     await message.answer(
         text=(
             f'Название: {poll_data["title"]}\n'
             f'Тема: {poll_data["topic"]}\n'
             f'Ответы: {poll_data["options"]}\n'
-            f'Чат: {poll_data["chat_id"]}\n'
+            f'Чат: {chat_title}\n'
             f'Дни: {poll_data["send_days_of_week_list"]}\n'
-            f'Время: {poll_data["send_time"]}\n'
-            f'Закрытие опроса через, ч: {poll_data["block_answer_delta_hours"]}\n'
-            f'Анонимные ответы: {poll_data["is_allows_anonymous_answers"]}\n'
-            f'Множественные ответы: {poll_data["is_allows_multiple_answers"]}\n'
-            f'Дни на паузе:{"".join(poll_data_dates_skip)}'
+            f'Время: {poll_data["send_time"][:-3]}\n'
+            f'Закрытие опроса через: {poll_data["block_answer_delta_hours"]} часа\n'
+            f'Анонимные ответы: {"Да" if poll_data["is_allows_anonymous_answers"] else "Нет"}\n'
+            f'Множественные ответы: {"Да" if poll_data["is_allows_multiple_answers"] else "Нет"}\n'
+            f'Дни на паузе: {"".join(poll_data_dates_skip) if poll_data_dates_skip else "-"}'
         ),
     )
-
     await message.answer(
-        text=(
-            'Что нужно сделать?'
-        ),
+        text='Что нужно сделать?',
         reply_markup=make_row_keyboard(
-            items=[
-                'Удалить',
-                'Приостановить',
-                'Возобновить',
-            ],
+            # TODO. Вынести в константы.
+            rows=(
+                ('Возобновить', 'Приостановить', 'Удалить'),
+                (RoutersCommands.CANCEL,),
+            ),
         ),
     )
 
-    await state.set_state(state=MyPollsStatesGroup.action)
-    return
 
-
-@router.message(
-    MyPollsStatesGroup.action,
-)
+@router.message(MyPollsStatesGroup.action)
 async def validate_action(
     message: Message,
     state: FSMContext,
@@ -174,6 +149,10 @@ async def validate_action(
     """
     Определяет необходимое действие с опросом.
     """
+    if message.text == RoutersCommands.CANCEL:
+        await __cancel(message=message, state=state)
+        return
+
     if message.text == 'Возобновить':
         return await _validate_action_resume(message=message, state=state)
     elif message.text == 'Приостановить':
@@ -182,9 +161,7 @@ async def validate_action(
         return await _validate_action_delete(message=message, state=state)
 
 
-@router.message(
-    MyPollsStatesGroup.dates_skip,
-)
+@router.message(MyPollsStatesGroup.dates_skip)
 async def pause_poll(
     message: Message,
     state: FSMContext,
@@ -192,6 +169,10 @@ async def pause_poll(
     """
     Добавляет указанные даты в Poll.dates_skip, чтобы опрос не отправлялся.
     """
+    if message.text == RoutersCommands.CANCEL:
+        await __cancel(message=message, state=state)
+        return
+
     try:
         dates: list[str] = parse_dates_from_text(text=message.text)
     except Exception:
@@ -202,15 +183,15 @@ async def pause_poll(
         return
 
     try:
-        with sync_session_maker() as session:
+        async with async_session_maker() as session:
             poll_data: dict[str, any] = await state.get_data()
-            poll: Poll = poll_sync_crud.retrieve_by_title(
+            poll: Poll = await poll_crud.retrieve_by_title(
                 obj_title=poll_data['title'],
                 session=session,
             )
             dates.extend(poll.dates_skip)
             dates.sort()
-            poll_sync_crud.update_by_id(
+            await poll_crud.update_by_id(
                 obj_id=poll.id,
                 obj_data={'dates_skip': dates},
                 session=session,
@@ -219,22 +200,18 @@ async def pause_poll(
     except Exception as err:
         await message.answer(
             text=(f'Произошла ошибка изменения дат:\t{err}'),
-            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
+            reply_markup=await get_keyboard_main_menu(user_id_telegram=message.from_user.id),
         )
-    else:
-        await message.answer(
-            text=('Даты успешно добавлены!'),
-            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
-        )
-        redis_delete(key=RedisKeys.POLL_ALL)
 
-    await state.clear()
-    return
+    await message.answer(
+        text=('Даты успешно добавлены!'),
+        reply_markup=ReplyKeyboardRemove(),
+    )
+    await async_sleep(1)
+    await __cancel(message=message, state=state)
 
 
-@router.message(
-    MyPollsStatesGroup.resume_days,
-)
+@router.message(MyPollsStatesGroup.resume_days)
 async def resume_poll(
     message: Message,
     state: FSMContext,
@@ -242,6 +219,10 @@ async def resume_poll(
     """
     Убирает указанные даты из Poll.dates_skip, чтобы опрос отправлялся.
     """
+    if message.text == RoutersCommands.CANCEL:
+        await __cancel(message=message, state=state)
+        return
+
     if message.text != 'Очистить':
         try:
             dates: list[str] = parse_dates_from_text(text=message.text)
@@ -253,9 +234,9 @@ async def resume_poll(
             return
 
     try:
-        with sync_session_maker() as session:
+        async with async_session_maker() as session:
             poll_data: dict[str, any] = await state.get_data()
-            poll: Poll = poll_sync_crud.retrieve_by_title(
+            poll: Poll = await poll_crud.retrieve_by_title(
                 obj_title=poll_data['title'],
                 session=session,
             )
@@ -264,7 +245,7 @@ async def resume_poll(
                 dates.sort()
             else:
                 dates: list = []
-            poll_sync_crud.update_by_id(
+            await poll_crud.update_by_id(
                 obj_id=poll.id,
                 obj_data={'dates_skip': dates},
                 session=session,
@@ -273,17 +254,15 @@ async def resume_poll(
     except Exception as err:
         await message.answer(
             text=(f'Произошла ошибка изменения дат:\t{err}'),
-            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
+            reply_markup=await get_keyboard_main_menu(user_id_telegram=message.from_user.id),
         )
-    else:
-        await message.answer(
-            text=('Даты успешно удалены!'),
-            reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
-        )
-        redis_delete(key=RedisKeys.POLL_ALL)
 
-    await state.clear()
-    return
+    await message.answer(
+        text=('Даты успешно удалены!'),
+        reply_markup=ReplyKeyboardRemove(),
+    )
+    await async_sleep(1)
+    await __cancel(message=message, state=state)
 
 
 async def _validate_action_delete(
@@ -294,28 +273,25 @@ async def _validate_action_delete(
     Удаляет опрос.
     """
     state_data: dict[str, any] = await state.get_data()
-    with sync_session_maker() as session:
-        poll: Poll = poll_sync_crud.retrieve_by_title(
+    async with async_session_maker() as session:
+        poll: Poll = await poll_crud.retrieve_by_title(
             obj_title=state_data['title'],
             session=session,
         )
-        poll_sync_crud.delete_by_id(
+        await poll_crud.delete_by_id(
             obj_id=poll.id,
             session=session,
         )
+        for job in scheduler.get_jobs():
+            if job.id.startswith(f'Send poll id={poll.id}'):
+                scheduler.remove_job(job_id=job.id)
 
     await message.answer(
-        text=(
-            'Опрос удален'
-        ),
-        reply_markup=KEYBOARD_MAIN_MENU_ADMIN,
+        text='Опрос удален',
+        reply_markup=ReplyKeyboardRemove(),
     )
-
-    redis_delete(key=RedisKeys.POLL_ALL)
-
-    await state.clear()
-
-    return
+    await async_sleep(1)
+    await __cancel(message=message, state=state)
 
 
 async def _validate_action_pause(
@@ -335,7 +311,6 @@ async def _validate_action_pause(
         reply_markup=KEYBOARD_CANCEL,
     )
     await state.set_state(state=MyPollsStatesGroup.dates_skip)
-    return
 
 
 async def _validate_action_resume(
@@ -353,16 +328,24 @@ async def _validate_action_resume(
             '\n\n'
             'Пожалуйста, соблюдайте синтаксис!'
             '\n\n'
-            'Для отмены нажмите "отмена".'
-            '\n\n'
             'Если нужно убрать все дни отмены, отправьте "Очистить".'
         ),
         reply_markup=make_row_keyboard(
-            items=[
-                'Очистить',
-                'Отмена',
-            ],
+            rows=(
+                ('Очистить',),
+                ('Отмена',),
+            ),
         ),
     )
     await state.set_state(state=MyPollsStatesGroup.resume_days)
-    return
+
+
+async def __cancel(message: Message, state: FSMContext) -> None:
+    """Обрабатывает команду отмены просмотра опросов."""
+    state_data: dict[str, any] = await state.get_data()
+    await delete_messages_list(
+        chat_id=message.chat.id,
+        messages_ids=list(range(state_data['_init_message_id'], message.message_id + 2)),
+    )
+    await state.clear()
+    await command_start(message=message, from_command_start=False)
