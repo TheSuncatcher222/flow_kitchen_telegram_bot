@@ -7,7 +7,7 @@ from datetime import (
 import pytz
 
 
-def get_today_time_data() -> tuple[date, str, str, time]:
+def get_today_datetime_data() -> tuple[date, str, str, time]:
     """
     Возвращает текущие:
         - дату: date (2024-11-28)
@@ -15,12 +15,12 @@ def get_today_time_data() -> tuple[date, str, str, time]:
         - день недели (eng iso): str (thu)
         - время: time (19:55:11.748060)
     """
-    today_datetime: datetime = datetime.now(pytz.timezone('Europe/Moscow'))
-    today_date: date = today_datetime.date()
-    today_date_str: str = str(today_datetime.date())
-    today_day_of_week: str = today_date.strftime('%A').lower()[:3]
-    now_time: time = today_datetime.time()
-    return today_date, today_date_str, today_day_of_week, now_time
+    now_datetime: datetime = datetime.now(pytz.timezone('Europe/Moscow'))
+    now_date: date = now_datetime.date()
+    now_date_str: str = str(now_datetime.date())
+    now_day_of_week: str = now_date.strftime('%A').lower()[:3]
+    now_time: time = now_datetime.time()
+    return now_datetime, now_date, now_date_str, now_day_of_week, now_time
 
 
 def parse_dates_from_text(text: str) -> list[str]:
