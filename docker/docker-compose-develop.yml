@@ -3,9 +3,6 @@ name: flow_kitchen_telegram_bot
 services:
 
   redis:
-      # TODO: почему-то с дефолтным файлом конфигурации с redis.io
-      #       другие контейнеры не могут подключиться к этому.
-      # command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
       container_name: flow_kitchen_telegram_bot_redis
       expose:
         - 6379
@@ -24,15 +21,13 @@ services:
       restart: unless-stopped
       volumes:
         - redis_volume:/data/
-        - ../redis/redis_pid:/var/run/redis
-        - ../redis/redis.conf:/usr/local/etc/redis/redis.conf
 
   postgresql:
     container_name: flow_kitchen_telegram_bot_postgresql
     env_file:
       - ../app/src/config/.env
-    expose:
-      - 5432
+    ports:
+      - 5432:5432
     hostname: flow-kitchen-telegram-bot-postgresql
     image: postgres:15-alpine3.18
     logging:
@@ -64,10 +59,7 @@ services:
       dockerfile: Dockerfile
     command: sh -c "
       alembic upgrade head &
-      python src/main.py &
-      celery -A src.celery_app.celery_app:celery_app worker --loglevel=INFO &
-      celery -A src.celery_app.celery_app:celery_app beat --loglevel=INFO &
-      celery -A src.celery_app.celery_app:celery_app flower --basic_auth=${CELERY_FLOWER_ADMIN_USERNAME}:${CELERY_FLOWER_ADMIN_PASSWORD} --loglevel=INFO"
+      python src/main.py"
     container_name: flow_kitchen_telegram_bot_app
     depends_on:
       - postgresql
@@ -78,26 +70,6 @@ services:
     restart: unless-stopped
     volumes:
       - ../app:/app
-
-  # app_celery:
-  #   build:
-  #     context: ../app
-  #     dockerfile: Dockerfile
-  #   command: sh -c "
-  #     celery -A src.celery_app.celery_app:celery_app worker --loglevel=INFO &
-  #     celery -A src.celery_app.celery_app:celery_app beat --loglevel=INFO &
-  #     celery -A src.celery_app.celery_app:celery_app flower --basic_auth=${CELERY_FLOWER_ADMIN_USERNAME}:${CELERY_FLOWER_ADMIN_PASSWORD} --loglevel=INFO"
-  #   container_name: flow_kitchen_telegram_bot_app_celery
-  #   depends_on:
-  #     - app
-  #   env_file:
-  #     - ../app/src/config/.env
-  #   hostname: flow-kitchen-telegram-bot-app-celery
-  #   ports:
-  #     - "5555:5555"
-  #   restart: unless-stopped
-  #   volumes:
-  #     - ../app:/app
 
 volumes:
 
