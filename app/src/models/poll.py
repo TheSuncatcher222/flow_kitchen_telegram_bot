@@ -19,29 +19,14 @@ from app.src.database.database import (
     TableNames,
 )
 from app.src.utils.translation import translate_days_of_week_from_eng_to_rus
-
-# from app.src.validators.poll import PollParams
-# INFO. Циркулярный импорт
-class PollParams:
-
-    # TODO. Свериться с документацией.
-    MESSAGE_ID_LEN_MAX: int = 128
-    CHAT_ID_LEN_MAX: int = 128
-    OPTION_LEN_MAX: int = 100
-    SEND_DATE_LEN_MAX: int = 3
-    SKIP_DATE_LEN_MAX: int = 2 + 1 + 2 + 1 + 4  # INFO: dd.mm.yyyy
-    SEND_TIME_LEN_MAX: int = 2 + 1 + 2
-    TITLE_LEN_MAX: int = 100
-    TOPIC_LEN_MAX: int = 100
+from app.src.validators.poll import PollParams
 
 
 class Poll(Base):
     """Декларативная модель представления опроса."""
 
-    __tablename__ = TableNames.POLL
-    __table_args__ = {
-        'comment': 'Опрос',
-    }
+    __tablename__ = TableNames.poll
+    __table_args__ = {'comment': 'Опрос'}
 
     # Primary keys.
 
@@ -73,7 +58,7 @@ class Poll(Base):
     is_allows_multiple_answers: Mapped[bool] = mapped_column(
         comment='статус множественного выбора ответов',
     )
-    is_poll_is_blocked: Mapped[bool] = mapped_column(
+    is_blocked: Mapped[bool] = mapped_column(
         comment='статус блокировки опроса',
         server_default=sql_false(),
     )
@@ -108,7 +93,7 @@ class Poll(Base):
     title: Mapped[str] = mapped_column(
         String(length=PollParams.TITLE_LEN_MAX),
     )
-    user_id: Mapped[int] = mapped_column(
+    user_id_telegram: Mapped[int] = mapped_column(
         comment='id пользователя Telegram, кто отправил опрос',
     )
 
@@ -128,7 +113,7 @@ class Poll(Base):
             'dates_skip': self.dates_skip,
             'is_allows_anonymous_answers': self.is_allows_anonymous_answers,
             'is_allows_multiple_answers': self.is_allows_multiple_answers,
-            'is_poll_is_blocked': self.is_poll_is_blocked,
+            'is_blocked': self.is_blocked,
             'last_send_date': self.last_send_date,
             'message_id': self.message_id,
             'topic': self.topic,
@@ -136,13 +121,11 @@ class Poll(Base):
             'send_days_of_week_list': self.send_days_of_week_list,
             'send_time': self.send_time,
             'title': self.title,
-            'user_id': self.user_id,
+            'user_id_telegram': self.user_id_telegram,
         }
 
         if represent_days_of_week_in_rus:
-            data['send_days_of_week_list'] = translate_days_of_week_from_eng_to_rus(
-                send_days_of_week_list=data['send_days_of_week_list'],
-            )
+            data['send_days_of_week_list'] = translate_days_of_week_from_eng_to_rus(days=data['send_days_of_week_list'])
 
         if represent_date_as_str:
             data['last_send_date'] = str(data['last_send_date'])
