@@ -1,6 +1,6 @@
 # __🕺Flow Kitchen Telegram Bot 💃__
 
-Официальный бот проекта "Flow Kitchen"
+Официальный бот проекта "Flow Kitchen" / "Dance Kitchen"
 
 ___
 
@@ -8,20 +8,25 @@ ___
 
 - [Python] (v.3.12) - целевой язык программирования backend
 - [Aiogram] (v.3.6) - асинхронный фреймворк для Telegram Bot API
-- [Celery] (v.5.4) - распределенная очередь задач
-- [Redis] (v.5.0) - резидентная система управления NoSQL базами данных, брокер сообщений Celery
+- [APScheduler] (v. 3.11) - планировщик заданий с поддержкой асинхронного кода
+- [PostgreSQL] (v.17.4) - реляционная база данных
+- [SQLAlchemy] (v.2.0) - библиотека для ORM работы с PostgreSQL
+- [Redis] (v.5.2) - NoSQL in-memory база данных
+- [Pydantic] (v.2.11) - библиотека для валидации данных
 - [Docker] (v.24.0) - инструмент для автоматизирования процессов разработки, доставки и запуска приложений в контейнерах
 
 ![Python](https://img.shields.io/badge/python-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)
 ![Telegram](https://img.shields.io/badge/Telegram-2CA5E0?style=for-the-badge&logo=telegram&logoColor=white)
-![Celery](https://a11ybadges.com/badge?logo=celery)
 ![Redis](https://img.shields.io/badge/redis-%23DD0031.svg?style=for-the-badge&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/docker-%230db7ed.svg?style=for-the-badge&logo=docker&logoColor=white)
 
 [Python]: <https://www.python.org/>
 [Aiogram]: <https://aiogram.dev/>
-[Celery]: <https://docs.celeryq.dev/en/stable/>
+[APScheduler]: <https://apscheduler.readthedocs.io/en/latest/>
+[PostgreSQL]: <https://www.postgresql.org/>
+[SQLAlchemy]: <https://www.sqlalchemy.org/>
 [Redis]: <https://redis.io/>
+[Pydantic]: <https://docs.pydantic.dev/latest/>
 [Docker]: <https://www.docker.com/>
 
 ___
@@ -34,29 +39,17 @@ ___
 git clone git@github.com:TheSuncatcher222/flow_kitchen_bot_telegram.git
 ```
 
-✅ Перейти в директорию конфигураций проекта config:
-
-```
-cd src/config
-```
-
 ✅ Создать файл переменных окружения из примера
 
 ```
-cp .env.example .env
+cp app/src/config/.env.example app/src/config/.env
 ```
 
 ✅ Изменить переменные окружения (если необходимо)
 
 ```
-(на примере редактора Nano)
-nano .env
-```
-
-✅ Перейти в директорию docker
-
-```
-cd ../../docker
+# на примере редактора Nano:
+nano app/src/config/.env
 ```
 
 ✅ Запустить Docker (убедитесь, что `docker daemon` запущен в системе!)
