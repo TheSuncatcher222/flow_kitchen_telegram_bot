@@ -14,10 +14,8 @@ from app.src.validators.chat import ChatParams
 class Chat(Base):
     """Декларативная модель представления чата."""
 
-    __tablename__ = TableNames.CHAT
-    __table_args__ = {
-        'comment': 'Чат',
-    }
+    __tablename__ = TableNames.chat
+    __table_args__ = {'comment': 'Чат'}
 
     # Primary keys.
 
@@ -32,6 +30,7 @@ class Chat(Base):
     chat_id: Mapped[str] = mapped_column(
         String(length=ChatParams.CHAT_ID_LEN_MAX),
         comment='id чата/группы Telegram',
+        unique=True,
     )
     is_group: Mapped[bool] = mapped_column(
         comment='статус группового чата',
