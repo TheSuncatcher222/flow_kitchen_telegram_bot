@@ -9,7 +9,7 @@ from app.src.utils.redis_app import (
     redis_set,
 )
 
-# TODO. Рефакторинг!
+# TODO. Добавить кеш в Redis!
 
 
 async def get_chat_all_titles() -> list[str]:
