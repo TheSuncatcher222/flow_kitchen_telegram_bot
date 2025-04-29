@@ -4,16 +4,18 @@ alembic~=1.13                     # Для контроля миграций в 
 # Aiogram
 aiogram~=3.6                      # Telegram Bot API.
 
-# Celey
-celery[redis]~=5.4                # Для обработки фоновых задач в Celery.
-flower~=2.0                       # Для просмотра задач в Celery.
-
-# PosgreSQL.
+# Database.
 asyncpg~=0.29                     # Для работы с PostgreSQL в асинхронном режиме.
-psycopg2-binary~=2.9              # Для работы с PostgreSQL в синхронном режиме (в Celery)
-sqladmin[full]~=0.17              # Аналог Django-Admin.
+psycopg2-binary~=2.9              # Для работы с PostgreSQL в синхронном режиме (в APScheduler)
 sqlalchemy~=2.0                   # ORM.
+redis~=5.2                        # Для работы с Redis.
+
+# Datetime.
+pytz==2025.2                      # Для работы с временем.
+
+# APScheduler.
+APScheduler~=3.11                 # Для работы с задачами (планировщиком).
 
 # Pydantic.
-pydantic~=2.7                     # Для валидации данных.
+pydantic~=2.11                    # Для валидации данных.
 pydantic-settings~=2.3            # Для загрузки переменных окружения из .env файлов.
