@@ -1,58 +1,36 @@
 from re import fullmatch
 
-# from app.src.utils.chat import get_chat_all_titles
-# from app.src.utils.poll import get_all_polls
+from app.src.utils.reply_keyboard import RoutersCommands
+from app.src.utils.translation import DAYS_RUS_TO_ENG_CRON
+
 
 class PollParams:
+    """
+    Параметры модели опроса.
+    """
 
     # TODO. Свериться с документацией.
+    MESSAGE_ID_LEN_MAX: int = 128
     CHAT_ID_LEN_MAX: int = 128
     OPTION_LEN_MAX: int = 100
     SEND_DATE_LEN_MAX: int = 3
+    SKIP_DATE_LEN_MAX: int = 2 + 1 + 2 + 1 + 4  # INFO: dd.mm.yyyy
     SEND_TIME_LEN_MAX: int = 2 + 1 + 2
     TITLE_LEN_MAX: int = 100
     TOPIC_LEN_MAX: int = 100
-
-
-DAYS_RUS_TO_ENG_CRON: dict[str, str] = {
-    'пн': 'mon',
-    'вт': 'tue',
-    'ср': 'wed',
-    'чт': 'thu',
-    'пт': 'fri',
-    'сб': 'sat',
-    'вс': 'sun',
-}
-DAYS_ENG_CRON_TO_RUS: dict[str, str] = {
-    'mon': 'пн',
-    'tue': 'вт',
-    'wed': 'ср',
-    'thu': 'чт',
-    'fri': 'пт',
-    'sat': 'сб',
-    'sun': 'вс',
-}
-
-
-def validate_poll_exists(value: str) -> str:
-    """
-    Валидирует существование опроса.
-    """
-    # all_polls: list[dict[str, any]] = get_all_polls()
-    # all_polls_titles = [poll['title'] for poll in all_polls]
-    # if value not in all_polls_titles():
-    #     raise ValueError(
-    #         'Опрос не найден. Попробуйте ещё раз.'
-    #     )
-    return value
 
 
 def validate_poll_title(value: str) -> str:
     """
     Валидирует название опроса.
     """
-    if value.strip().startswith('/'):
+    value: str = value.strip()
+    if value.startswith('/'):
         raise ValueError('Название опроса не должно начинаться с "/".')
+    if value == RoutersCommands.CANCEL:
+        raise ValueError(f'Название опроса не может быть {RoutersCommands.CANCEL}.')
+    elif value == RoutersCommands.HOME:
+        raise ValueError(f'Название опроса не может быть {RoutersCommands.HOME}.')
     if len(value) > PollParams.TITLE_LEN_MAX:
         raise ValueError(
             'Название опроса для панели управления слишком длинное. '
@@ -82,9 +60,7 @@ def validate_poll_options(value: str) -> list[str]:
     """
     options: list[str] = value.split(',')
     if len(options) < 2 or len(options) > 10:
-        raise ValueError(
-            'Необходимо указать от 2 до 10 вариантов ответов.',
-        )
+        raise ValueError('Необходимо указать от 2 до 10 вариантов ответов.')
     for option in options:
         if option.strip().startswith('/'):
             raise ValueError('Варианты ответов не должны начинаться с "/".')
@@ -97,14 +73,15 @@ def validate_poll_options(value: str) -> list[str]:
     return options
 
 
-def validate_poll_chat_id(value: str) -> str:
+async def validate_poll_chat_id(value: str) -> str:
     """
     Валидирует чат ID.
     """
-    # if value not in get_chat_all_titles():
-    #     raise ValueError(
-    #         'Телеграм чат с таким названием недоступен.'
-    #     )
+    # INFO. Циклический импорт.
+    from app.src.utils.chat import get_chat_all_titles
+
+    if value not in await get_chat_all_titles():
+        raise ValueError('Телеграм чат с таким названием недоступен.')
     return value
 
 
@@ -125,18 +102,20 @@ def validate_poll_time(value: str) -> str:
     """
     Валидирует время опроса.
     """
+    value: str = value.lower().strip()
     if not fullmatch(r'\d{2}:\d{2}', value):
-        raise ValueError(
-            'Время опроса должно быть в формате "чч:мм".',
-        )
+        raise ValueError('Время опроса должно быть в формате "чч:мм".')
+    hours, minutes = map(int, value.split(':'))
+    if hours < 0 or hours > 23 or minutes < 0 or minutes > 59:
+        raise ValueError('Время опроса должно быть в формате "чч:мм".')
     return value
+
 
 def validate_poll_yes_no(value: str) -> str:
     """
     Валидирует значение "да"/"нет".
     """
-    if value.lower() not in ('да', 'нет'):
-        raise ValueError(
-            'Значение должно быть либо "да", либо "нет".',
-        )
+    value: str = value.lower().strip()
+    if value not in ('да', 'нет'):
+        raise ValueError('Значение должно быть либо "да", либо "нет".')
     return value
