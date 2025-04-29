@@ -1,10 +1,13 @@
-from aiogram.exceptions import TelegramBadRequest
+from aiogram.exceptions import (
+    TelegramBadRequest,
+    TelegramForbiddenError,
+)
 from aiogram.methods.delete_message import DeleteMessage
 
 from app.src.telegram_bot.bot import bot
 
 
-async def bot_delete_messages_list(
+async def delete_messages_list(
     chat_id: int,
     messages_ids: list[int],
     raise_exception: bool = False,
@@ -12,6 +15,7 @@ async def bot_delete_messages_list(
     """
     Удаляет указанные сообщения в телеграм чате/группе.
     """
+    messages_ids.reverse()
     for message_id in messages_ids:
         try:
             await bot(
@@ -20,9 +24,11 @@ async def bot_delete_messages_list(
                     message_id=message_id,
                 ),
             )
+        except TelegramForbiddenError:
+            if raise_exception:
+                raise
+            return
         except TelegramBadRequest:
             if raise_exception:
                 raise
-            else:
-                continue
-    return
+            continue
