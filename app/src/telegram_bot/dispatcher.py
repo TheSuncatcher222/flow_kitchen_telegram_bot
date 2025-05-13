@@ -13,6 +13,7 @@ from app.src.telegram_bot.routers.poll_add import router as poll_add
 from app.src.telegram_bot.routers.poll_my import router as poll_my
 from app.src.telegram_bot.routers.redis_clear import router as redis_clear
 from app.src.telegram_bot.routers.start import router as start
+from app.src.telegram_bot.routers.sync_poll_schedule import router as sync_poll_schedule
 
 dp: Dispatcher = Dispatcher(
     storage=MemoryStorage(),
@@ -27,6 +28,7 @@ routers: list[Router] = (
     poll_my,
     redis_clear,
     start,
+    sync_poll_schedule,
     # WARNING! Роутер _fallback должен быть зарегистрирован ниже всех остальных!
     _fallback,
 )
