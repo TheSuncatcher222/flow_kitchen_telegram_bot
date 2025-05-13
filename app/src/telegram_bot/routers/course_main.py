@@ -99,13 +99,23 @@ async def _buy(message: Message, state: FSMContext) -> None:
     Покупает курс.
     """
     await message.answer(
-        text='Для приобретения курса напишите @sergeypilip',
+        text=(
+            '*Чтобы приобрести курс:*'
+            '\n\n'
+            '1\. Произведите оплату согласно выбранному тарифу переводом по '
+            'номеру телефона *\+79219884878** *\(Сбер, Т\-Банк, Сергей Васильевич П\.\)'
+            '\n\n'
+            '2\. Пришлите *скриншот/чек* об оплате [СЮДА](https://t.me/sergeypilip)'
+        ),
         reply_markup=KEYBOARD_HOME,
+        parse_mode='MarkdownV2',
     )
 
 
 async def __cancel(message: Message, state: FSMContext) -> None:
-    """Обрабатывает команду отмены формы создания и возврат в главное меню."""
+    """
+    Обрабатывает команду отмены формы создания и возврат в главное меню.
+    """
     state_data: dict[str, any] = await state.get_data()
     await delete_messages_list(
         chat_id=message.chat.id,
