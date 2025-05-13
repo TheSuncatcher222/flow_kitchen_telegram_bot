@@ -25,17 +25,18 @@ class RoutersCommands:
     DELETE: str = 'Удалить'
 
     # Developer
-    REDIS_CLEAR: str = 'Очистить Redis'
+    REDIS_CLEAR: str = '⛔️ Очистить Redis'
+    SYNC_POLL_SCHEDULE: str = '⛔️ Синхронизировать опросы'
 
     # Course
-    COURSE_ADD: str = 'Добавить курс'
-    COURSE_MY: str = 'Мои курсы'
+    COURSE_ADD: str = '⚠️ Добавить курс'
+    COURSE_MY: str = '⚠️ Мои курсы'
     COURSE_TARIFF: str = 'Тарифы и цены'
     COURSE_BUY: str = 'Приобрести курс'
 
     # Poll
-    POLL_ADD: str = 'Добавить опрос'
-    POLL_MY: str = 'Мои опросы'
+    POLL_ADD: str = '⚠️ Добавить опрос'
+    POLL_MY: str = '⚠️ Мои опросы'
 
 
 def make_row_keyboard(rows: tuple[tuple[str]]) -> ReplyKeyboardMarkup:
@@ -68,6 +69,7 @@ async def get_keyboard_main_menu(user_id_telegram: int | str) -> ReplyKeyboardMa
     if check_if_user_is_developer(user_id_telegram=user_id_telegram):
         keyboard: list[list[str]] = [
             [RoutersCommands.REDIS_CLEAR],
+            [RoutersCommands.SYNC_POLL_SCHEDULE],
             [RoutersCommands.COURSE_ADD, RoutersCommands.COURSE_MY],
             [RoutersCommands.POLL_ADD, RoutersCommands.POLL_MY],
             *keyboard,
