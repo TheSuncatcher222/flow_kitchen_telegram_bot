@@ -1,21 +1,27 @@
 from datetime import timedelta
-from typing import TYPE_CHECKING
+from zoneinfo import ZoneInfo
 
 from aiogram.methods import (
     SendPoll,
     StopPoll,
 )
 from aiogram.types import Message
+from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 
 from app.src.crud.poll import poll_crud
 from app.src.database.database import async_session_maker
 from app.src.scheduler.scheduler import scheduler
+from app.src.models.poll import Poll
 from app.src.telegram_bot.bot import bot
 from app.src.utils.date import get_today_datetime_data
 
-if TYPE_CHECKING:
-    from app.src.models.poll import Poll
+
+def create_poll_schedule_id(poll: Poll, day: str) -> str:
+    """
+    Создает id задачи для отправки опроса в APIScheduler.
+    """
+    return f'Send poll id={poll.id}, day={day}, hour={poll.send_time.hour}, minute={poll.send_time.minute}'
 
 
 async def get_all_polls_titles() -> list[str]:
@@ -102,4 +108,27 @@ async def poll_block(poll_id: int) -> None:
             obj_id=poll.id,
             obj_data={'is_blocked': True},
             session=session,
+        )
+
+
+def schedule_poll_sending(poll: Poll, specific_day: str | None = None) -> None:
+    """
+    Создает задачу для cron отправки опроса в APIScheduler.
+
+    Если указан specific_day, то создает задачу только для этого дня.
+    """
+    for day in poll.send_days_of_week_list:
+        if specific_day and specific_day != day:
+            continue
+
+        scheduler.add_job(
+            id=create_poll_schedule_id(poll=poll, day=day),
+            trigger=CronTrigger(
+                day_of_week=day,
+                hour=poll.send_time.hour,
+                minute=poll.send_time.minute,
+                timezone=ZoneInfo("Europe/Moscow"),
+            ),
+            func=poll_send,
+            kwargs={'poll_id': poll.id},
         )
