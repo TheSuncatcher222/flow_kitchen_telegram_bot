@@ -1,7 +1,6 @@
 from asyncio import sleep as asyncio_sleep
 from datetime import time
 from typing import TYPE_CHECKING
-from zoneinfo import ZoneInfo
 
 from aiogram import (
     Router,
@@ -16,9 +15,7 @@ from aiogram.types import (
     Message,
     ReplyKeyboardRemove,
 )
-from apscheduler.triggers.cron import CronTrigger
 
-from app.src.scheduler.scheduler import scheduler
 from app.src.crud.poll import poll_crud
 from app.src.database.database import (
     RedisKeys,
@@ -31,7 +28,7 @@ from app.src.utils.chat import (
     get_chat_id_by_title,
     get_chat_all_titles,
 )
-from app.src.utils.poll import poll_send
+from app.src.utils.poll import schedule_poll_sending
 from app.src.utils.redis_app import redis_delete
 from app.src.utils.reply_keyboard import (
     RoutersCommands,
@@ -366,19 +363,7 @@ async def add_poll_ask_finish(
             )
             obj_data['id'] = poll.id
 
-        for day in obj_data['send_days_of_week_list']:
-            send_datetime: time = obj_data['send_time']
-            scheduler.add_job(
-                id=f'Send poll id={obj_data["id"]}, day={day}, hour={send_datetime.hour}, minute={send_datetime.minute}',
-                trigger=CronTrigger(
-                    day_of_week=day,
-                    hour=send_datetime.hour,
-                    minute=send_datetime.minute,
-                    timezone=ZoneInfo("Europe/Moscow"),
-                ),
-                func=poll_send,
-                kwargs={'poll_id': obj_data['id']},
-            )
+        schedule_poll_sending(poll=poll)
 
         text: str = f'Опрос добавлен в рассылку!'
         redis_delete(key=RedisKeys.POLL_ALL)
