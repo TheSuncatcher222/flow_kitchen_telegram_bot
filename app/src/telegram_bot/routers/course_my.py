@@ -221,6 +221,8 @@ async def my_course_change_description(
         return await __cancel(message=message, state=state)
 
     try:
+        if message.caption:
+            raise ValueError('Нужно указать описание курса без прикрепления картинки')
         validate_course_description(value=message.text)
     except ValueError as e:
         await message.answer(
