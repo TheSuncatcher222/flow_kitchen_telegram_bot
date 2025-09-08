@@ -79,11 +79,17 @@ async def my_course_ask_title(
         await async_sleep(1)
         return await __cancel(message=message, state=state)
 
+    rows = []
+    MAX_ITEMS: int = 2
+    for c in range(0, len(courses_all_titles), MAX_ITEMS):
+        rows.append(courses_all_titles[c:c + MAX_ITEMS])
+    rows.append((RoutersCommands.HOME,))
+
     await state.set_state(state=MyCoursesStatesGroup.title)
 
     await message.answer(
         text='Какой курс интересует?',
-        reply_markup=make_row_keyboard(rows=(courses_all_titles, (RoutersCommands.HOME,))),
+        reply_markup=make_row_keyboard(rows=rows),
     )
 
 

@@ -70,11 +70,17 @@ async def my_polls_ask_title(
         await __cancel(message=message, state=state)
         return
 
+    rows = []
+    MAX_ITEMS: int = 2
+    for c in range(0, len(polls_all_titles), MAX_ITEMS):
+        rows.append(polls_all_titles[c:c + MAX_ITEMS])
+    rows.append((RoutersCommands.HOME,))
+
     await state.set_state(state=MyPollsStatesGroup.title)
 
     await message.answer(
         text='Какой опрос интересует?',
-        reply_markup=make_row_keyboard(rows=(polls_all_titles, (RoutersCommands.HOME,))),
+        reply_markup=make_row_keyboard(rows=rows),
     )
 
 
