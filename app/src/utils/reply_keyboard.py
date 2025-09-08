@@ -45,11 +45,8 @@ def make_row_keyboard(rows: tuple[tuple[str]]) -> ReplyKeyboardMarkup:
     :param items: список текстов для кнопок
     :return: объект реплай-клавиатуры
     """
-    keyboard: list[list[KeyboardButton]] = []
-    for row in rows:
-        keyboard.append(KeyboardButton(text=item) for item in row)
     return ReplyKeyboardMarkup(
-        keyboard=keyboard,
+        keyboard=[[KeyboardButton(text=item) for item in row] for row in rows],
         resize_keyboard=True,
     )
 
