@@ -62,3 +62,26 @@ async def sync_poll_schedule(message: Message) -> None:
         chat_id=message.chat.id,
         messages_ids=list(range(message.message_id, message.message_id + 2)),
     )
+
+
+@router.message(
+    IsDeveloper(),
+    F.text == RoutersCommands.DELETE_POLL_SCHEDULE,
+)
+async def delete_schedule_jobs(message: Message) -> None:
+    """
+    Обрабатывает команду "Удалить scheduler задачи".
+    """
+    changes: list[str] = []
+    for job in scheduler.get_jobs():
+        if job.id.startswith("Send poll"):
+            changes.append(f'Удален опрос "{job.id}"')
+            scheduler.remove_job(job.id)
+
+    await message.reply(text='\n'.join(changes))
+    await async_sleep(10)
+
+    await delete_messages_list(
+        chat_id=message.chat.id,
+        messages_ids=list(range(message.message_id, message.message_id + 2)),
+    )
