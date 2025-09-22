@@ -26,6 +26,7 @@ class RoutersCommands:
 
     # Developer
     REDIS_CLEAR: str = '⛔️ Очистить Redis'
+    DELETE_POLL_SCHEDULE: str = '⛔️ Удалить scheduler опросы'
     SYNC_POLL_SCHEDULE: str = '⛔️ Синхронизировать опросы'
 
     # Course
@@ -66,7 +67,7 @@ async def get_keyboard_main_menu(user_id_telegram: int | str) -> ReplyKeyboardMa
     if check_if_user_is_developer(user_id_telegram=user_id_telegram):
         keyboard: list[list[str]] = [
             [RoutersCommands.REDIS_CLEAR],
-            [RoutersCommands.SYNC_POLL_SCHEDULE],
+            [RoutersCommands.SYNC_POLL_SCHEDULE, RoutersCommands.DELETE_POLL_SCHEDULE],
             [RoutersCommands.COURSE_ADD, RoutersCommands.COURSE_MY],
             [RoutersCommands.POLL_ADD, RoutersCommands.POLL_MY],
             *keyboard,
