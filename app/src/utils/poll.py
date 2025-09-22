@@ -10,6 +10,7 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.date import DateTrigger
 
 from app.src.crud.poll import poll_crud
+from app.src.config.config import TimeIntervals
 from app.src.database.database import async_session_maker
 from app.src.scheduler.scheduler import scheduler
 from app.src.models.poll import Poll
@@ -73,6 +74,7 @@ async def poll_send(poll_id: int) -> None:
             trigger=DateTrigger(run_date=now_datetime + timedelta(hours=poll.block_answer_delta_hours)),
             func=poll_block,
             kwargs={'poll_id': poll.id},
+            misfire_grace_time=TimeIntervals.SECONDS_IN_1_MINUTE * 30,
         )
 
     async with async_session_maker() as session:
@@ -131,4 +133,5 @@ def schedule_poll_sending(poll: Poll, specific_day: str | None = None) -> None:
             ),
             func=poll_send,
             kwargs={'poll_id': poll.id},
+            misfire_grace_time=TimeIntervals.SECONDS_IN_1_MINUTE * 30,
         )
