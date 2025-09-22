@@ -183,9 +183,14 @@ async def add_poll_ask_chat_id(
     await state.update_data(options=message.text)
     await state.set_state(state=PollForm.chat_id)
 
+    CHUNK_SIZE: int = 2
+    titles: list[str] = await get_chat_all_titles()
+    rows: list[list[str]] = list(
+        (titles[i : i + CHUNK_SIZE] for i in range(0, len(titles), CHUNK_SIZE))
+    )
     await message.answer(
         text=('В какой телеграм чат отправлять опрос?'),
-        reply_markup=make_row_keyboard(rows=(await get_chat_all_titles(),)),
+        reply_markup=make_row_keyboard(rows=rows),
     )
 
 
